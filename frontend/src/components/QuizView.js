@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import $ from 'jquery';
 import '../stylesheets/QuizView.css';
 
-const questionsPerPlay = 2;
+// design change: let the server controls this, not client
+// const questionsPerPlay = 5;
 
 class QuizView extends Component {
   constructor(props) {
@@ -170,11 +171,7 @@ class QuizView extends Component {
   }
 
   renderPlay() {
-    if (this.state.previousQuestions.length === questionsPerPlay) {
-      console.log("here");
-    }
-    return this.state.previousQuestions.length === questionsPerPlay ||
-      this.state.forceEnd ? (
+    return this.state.forceEnd ? (
       this.renderFinalScore()
     ) : this.state.showAnswer ? (
       this.renderCorrectAnswer()

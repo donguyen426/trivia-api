@@ -8,11 +8,7 @@ from models import setup_db, Question, Category
 import time
 import math
 import random
-
-
-def isSubset(d1, d2):
-    """Check if dictionary d2 is a subset of dictionary d1"""
-    return (d2.items() <= d1.items())
+from flask import jsonify
 
 
 class TestTriviaAPI(unittest.TestCase):
@@ -35,7 +31,7 @@ class TestTriviaAPI(unittest.TestCase):
             # create all tables
             self.db.create_all()
 
-    def test_get_categories_success(self):
+    def test_get_categories(self):
         response = self.client().get("/categories")
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(response.json["categories"], None)
@@ -44,7 +40,7 @@ class TestTriviaAPI(unittest.TestCase):
         # test first page
         response = self.client().get("/questions?page=1")
         self.assertEqual(response.status_code, 200)
-        totalQuestions = response.json["totalQuestions"]
+        totalQuestions = response.json["total_questions"]
         if totalQuestions > 10:
             self.assertEqual(len(response.json["questions"]), 10)
         else:
@@ -65,8 +61,8 @@ class TestTriviaAPI(unittest.TestCase):
         response = self.client().post("/questions", json=new_question)
         self.assertEqual(response.status_code, 201)
         # test the fields of newly created record
-        self.assertEqual(
-            isSubset(response.json["question"], new_question), True)
+        self.assertEqual(new_question.items() <=
+                         response.json["question"].items(), True)
 
     def test_create_question_with_invalid_category(self):
         """Test POST /questions endpoint with category that does not exist"""
@@ -80,7 +76,7 @@ class TestTriviaAPI(unittest.TestCase):
         response = self.client().get("/categories/1/questions")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            len(response.json["questions"]), response.json["totalQuestions"])
+            len(response.json["questions"]), response.json["total_questions"])
 
     def test_delete_question_success(self):
         """Test delete a question"""
@@ -103,9 +99,73 @@ class TestTriviaAPI(unittest.TestCase):
                                       json={"searchTerm": "question"})
         self.assertEqual(response.status_code, 200)
 
-    # TODO
-    def test_quizzes(self):
-        self.assertEqual(1, 0)
+    def test_quizzes_specific_category(self):
+        """Play with the first 3 categories """
+        # get the number of questions per play
+        response = self.client().get("/configs")
+        self.assertEqual(response.status_code, 200)
+        questions_per_play = response.json["configs"]["questions_per_play"]
+        # get total questions of specified category
+        response = self.client().get("/categories/1/questions")
+        self.assertEqual(response.status_code, 200)
+        total_questions = response.json["total_questions"]
+
+        # play
+        previous_questions = []
+        isPlaying = True
+        questions_received = 0
+        while isPlaying == True:
+            response = self.client().post("/quizzes",
+                                          json={"previous_questions": previous_questions, "quiz_category": {"type": "", "id": 1}})
+            self.assertEqual(response.status_code, 200)
+
+            isPlaying = bool(response.json["question"])
+            if isPlaying:
+                # returning question must not be duplicated
+                self.assertEqual(previous_questions.__contains__(
+                    response.json["question"]["id"]), False)
+                previous_questions.append(response.json["question"]["id"])
+                questions_received = questions_received + 1
+
+        # done playing, now verifying
+        if total_questions < questions_per_play:
+            self.assertEqual(questions_received, total_questions)
+        else:
+            self.assertEqual(questions_received, questions_per_play)
+
+    def test_quizzes_category_all(self):
+        """Play with the first 3 categories """
+        # get the number of questions per play
+        response = self.client().get("/configs")
+        self.assertEqual(response.status_code, 200)
+        questions_per_play = response.json["configs"]["questions_per_play"]
+        # get total questions of specified category
+        response = self.client().get("/questions?page=1")
+        self.assertEqual(response.status_code, 200)
+        total_questions = response.json["total_questions"]
+
+        # play
+        previous_questions = []
+        isPlaying = True
+        questions_received = 0
+        while isPlaying == True:
+            response = self.client().post("/quizzes",
+                                          json={"previous_questions": previous_questions, "quiz_category": {"type": "click", "id": 0}})
+            self.assertEqual(response.status_code, 200)
+
+            isPlaying = bool(response.json["question"])
+            if isPlaying:
+                # returning question must not be duplicated
+                self.assertEqual(previous_questions.__contains__(
+                    response.json["question"]["id"]), False)
+                previous_questions.append(response.json["question"]["id"])
+                questions_received = questions_received + 1
+
+        # done playing, now verifying
+        if total_questions < questions_per_play:
+            self.assertEqual(questions_received, total_questions)
+        else:
+            self.assertEqual(questions_received, questions_per_play)
 
     def tearDown(self):
         """Executed after reach test"""

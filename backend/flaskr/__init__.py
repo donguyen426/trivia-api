@@ -39,6 +39,8 @@ def create_app(test_config=None):
     """
     app.add_url_rule(
         "/categories", methods=["GET"], view_func=views.get_categories)
+    app.add_url_rule(
+        "/categories", methods=["POST"], view_func=views.create_category)
     """
     @TODO:
     Create an endpoint to handle GET requests for questions,
@@ -114,10 +116,29 @@ def create_app(test_config=None):
     """
     app.add_url_rule("/quizzes", methods=["POST"], view_func=views.get_quizzes)
 
+    app.add_url_rule("/configs",
+                     methods=["GET"], view_func=views.get_configs)
+
     """
     @TODO:
     Create error handlers for all expected errors
     including 404 and 422.
     """
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
+            "success": False,
+            "error": 404,
+            "message": "Not found"
+        }), 404
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return jsonify({
+            "success": False,
+            "error": 422,
+            "message": "unprocessable"
+        }), 422
 
     return app
