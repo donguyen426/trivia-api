@@ -32,11 +32,13 @@ class TestTriviaAPI(unittest.TestCase):
             self.db.create_all()
 
     def test_get_categories(self):
+        """Test GET /categories endpoint"""
         response = self.client().get("/categories")
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(response.json["categories"], None)
 
     def test_get_paginated_questions(self):
+        """Test GET /questions?page=<page_num> endpoint"""
         # test first page
         response = self.client().get("/questions?page=1")
         self.assertEqual(response.status_code, 200)
@@ -72,35 +74,38 @@ class TestTriviaAPI(unittest.TestCase):
         response = self.client().post("/questions", json=new_question)
         self.assertEqual(response.status_code, 404)
 
-    def test_get_question_by_category_success(self):
+    def test_get_question_by_category(self):
+        """Test GET /categories/<category_id>/questions endpoint"""
         response = self.client().get("/categories/1/questions")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             len(response.json["questions"]), response.json["total_questions"])
 
     def test_delete_question_success(self):
-        """Test delete a question"""
-        # Create a new question then delete it
+        """Test DELETE /questions/<question_id> endpoint"""
+        # Create a new question
         response = self.client().post("/questions", json={"question": f"question {str(time.time_ns())}",
                                                           "answer": f"answer {str(time.time_ns())}", "difficulty": random.randint(1, 5), "category": 1})
         self.assertEqual(response.status_code, 201)
         created_question_id = response.json["question"]["id"]
+        # delete it
         delete_response = self.client().delete(
             f"/questions/{created_question_id}")
         self.assertEqual(delete_response.status_code, 204)
 
     def test_delete_question_with_incorrect_id(self):
-        """Test delete a question"""
+        """Test DELETE /questions/<question_id> endpoint with incorrect question id"""
         delete_response = self.client().delete("/questions/111111111111111111111111")
         self.assertEqual(delete_response.status_code, 404)
 
     def test_search_question(self):
+        """Test POST /questions/search"""
         response = self.client().post("/questions/search",
                                       json={"searchTerm": "question"})
         self.assertEqual(response.status_code, 200)
 
     def test_quizzes_specific_category(self):
-        """Play with the first 3 categories """
+        """Test POST /quizzes with provided category """
         # get the number of questions per play
         response = self.client().get("/configs")
         self.assertEqual(response.status_code, 200)
@@ -134,7 +139,7 @@ class TestTriviaAPI(unittest.TestCase):
             self.assertEqual(questions_received, questions_per_play)
 
     def test_quizzes_category_all(self):
-        """Play with the first 3 categories """
+        """Test POST /quizzes with ALL category """
         # get the number of questions per play
         response = self.client().get("/configs")
         self.assertEqual(response.status_code, 200)

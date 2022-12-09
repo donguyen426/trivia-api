@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import $ from 'jquery';
 import '../stylesheets/QuizView.css';
 
-// design change: let the server controls this, not client
+// design change: let the server define this, not client
 // const questionsPerPlay = 5;
 
 class QuizView extends Component {
@@ -17,6 +17,7 @@ class QuizView extends Component {
       currentQuestion: {},
       guess: '',
       forceEnd: false,
+      questionsPerPlay: 0
     };
   }
 
@@ -33,6 +34,22 @@ class QuizView extends Component {
         return;
       },
     });
+    // get questions per play from server
+    $.ajax({
+      url: `/configs`,
+      type: 'GET',
+      success: (result) => {
+        this.setState({
+          questionsPerPlay: result.configs.questions_per_play
+        });
+        return;
+      },
+      error: (error) => {
+        alert('Unable to load questions per play. Please try your request again');
+        return;
+      },
+    });
+
   }
 
   selectCategory = ({ type, id = 0 }) => {
@@ -171,6 +188,8 @@ class QuizView extends Component {
   }
 
   renderPlay() {
+    // change: no need to check for questions per play which is defined in the server side
+    // just keep playing until received question is None (forEnd=True)
     return this.state.forceEnd ? (
       this.renderFinalScore()
     ) : this.state.showAnswer ? (
@@ -178,7 +197,7 @@ class QuizView extends Component {
     ) : (
       <div className='quiz-play-holder'>
         <div className='quiz-question'>
-          {this.state.currentQuestion.question}
+          {"Question " + (this.state.previousQuestions.length + 1) + "/" + this.state.questionsPerPlay + ": " + this.state.currentQuestion.question}
         </div>
         <form onSubmit={this.submitGuess}>
           <input type='text' name='guess' onChange={this.handleChange} />

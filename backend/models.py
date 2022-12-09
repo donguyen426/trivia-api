@@ -82,10 +82,7 @@ class Category(db.Model):
         self.type = type
 
     def format(self):
-        # return {
-        #     'id': self.id,
-        #     'type': self.type
-        # }
+        # change format to fit what the frontend expects
         return {
             str(self.id): self.type
         }
