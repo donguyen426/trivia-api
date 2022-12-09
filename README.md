@@ -16,6 +16,12 @@ That's where you come in! Help them finish the trivia app so they can start hold
 - Backend: Flask, SQLAlchemy
 - Frontend: React
 
+## Changes
+There are changes that I made in addition to the TODO items:
+- Change endpoint of search from 'POST /questions' to 'POST /questions/search'
+- Remove questionsPerPlay constant in the frontend code to the backend. Also add 'GET /configs' endpoint to get questions_per_play from the frontend.
+- In Play, display 'Question x/questions_per_play' before each question
+
 ## Get Started
 
 > Backend: go to [Backend README](./backend/README.md) for more details.
