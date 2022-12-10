@@ -37,7 +37,12 @@ class TestTriviaAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(response.json["categories"], None)
 
-    def test_get_paginated_questions(self):
+    def test_get_categories_invalid_format(self):
+        """Test GET /categories endpoint"""
+        response = self.client().get("/categories/12")
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_paginated_questions_success(self):
         """Test GET /questions?page=<page_num> endpoint"""
         # test first page
         response = self.client().get("/questions?page=1")
@@ -54,6 +59,18 @@ class TestTriviaAPI(unittest.TestCase):
         response = self.client().get(f"/questions?page={lastPage}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(expectedQuestions, len(response.json["questions"]))
+
+    def test_get_paginated_questions_invalid_page_number(self):
+        """Test GET /questions?page=<page_num> endpoint"""
+        # test first page
+        response = self.client().get("/questions?page=xxxxx")
+        self.assertEqual(response.status_code, 200)
+        totalQuestions = response.json["total_questions"]
+        if totalQuestions > 10:
+            self.assertEqual(len(response.json["questions"]), 10)
+        else:
+            self.assertEqual(
+                response.json["questions"], totalQuestions)
 
     def test_create_question_success(self):
         """Test POST /questions endpoint with happy path test data"""
@@ -74,12 +91,17 @@ class TestTriviaAPI(unittest.TestCase):
         response = self.client().post("/questions", json=new_question)
         self.assertEqual(response.status_code, 404)
 
-    def test_get_question_by_category(self):
+    def test_get_question_by_category_success(self):
         """Test GET /categories/<category_id>/questions endpoint"""
         response = self.client().get("/categories/1/questions")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             len(response.json["questions"]), response.json["total_questions"])
+
+    def test_get_question_of_invalid_category(self):
+        """Test GET /categories/<category_id>/questions endpoint"""
+        response = self.client().get("/categories/fff/questions")
+        self.assertEqual(response.status_code, 404)
 
     def test_delete_question_success(self):
         """Test DELETE /questions/<question_id> endpoint"""
@@ -98,11 +120,18 @@ class TestTriviaAPI(unittest.TestCase):
         delete_response = self.client().delete("/questions/111111111111111111111111")
         self.assertEqual(delete_response.status_code, 404)
 
-    def test_search_question(self):
+    def test_search_question_success(self):
         """Test POST /questions/search"""
         response = self.client().post("/questions/search",
-                                      json={"searchTerm": "question"})
+                                      json={"searchTerm": "?"})
         self.assertEqual(response.status_code, 200)
+
+    def test_search_question_zero_result(self):
+        """Test POST /questions/search"""
+        response = self.client().post("/questions/search",
+                                      json={"searchTerm": "fasdfjkasldfjaslkdfjasdkfjasdjfsa"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["total_questions"], 0)
 
     def test_quizzes_specific_category(self):
         """Test POST /quizzes with provided category """

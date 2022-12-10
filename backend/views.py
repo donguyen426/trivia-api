@@ -18,6 +18,8 @@ def get_categories():
     return jsonify({"categories": categories})
 
 # for testing only
+
+
 def create_category():
     """POST /categories - create a category"""
     category_type = request.json["type"]
@@ -72,7 +74,7 @@ def create_question():
         db.session.commit()
         # return the newly created question together with 201
         formatted_question = question.format()
-        return {"question": formatted_question}, HTTPStatus.CREATED
+        return jsonify({"question": formatted_question}), HTTPStatus.CREATED
     except SQLAlchemyError as e:
         print(e)
         db.session.rollback()
